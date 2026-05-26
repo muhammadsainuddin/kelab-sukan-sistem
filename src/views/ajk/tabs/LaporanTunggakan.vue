@@ -129,7 +129,6 @@ const fetchStatistik = async () => {
 
 onMounted(fetchStatistik);
 </script>
-
 <style scoped>
 .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
 @keyframes fadeIn {

@@ -260,7 +260,6 @@ const formatTarikh = (tarikh) => {
 
 onMounted(fetchAcara);
 </script>
-
 <style scoped>
 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 @keyframes fadeIn {

@@ -35,6 +35,7 @@ api.interceptors.response.use(
       // 1. Bersihkan sisa data sesi di LocalStorage
       localStorage.removeItem('token');
       localStorage.removeItem('role');
+      localStorage.removeItem('user');
 
       // 2. Paparkan amaran kepada pengguna
       alert("Sesi keselamatan anda telah tamat tempoh. Sila log masuk semula.");

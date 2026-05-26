@@ -119,6 +119,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../services/api';
+import { getRoleDashboard, isMobileDevice } from '../utils/auth.js';
 
 const router = useRouter();
 
@@ -138,20 +139,7 @@ const handleLogin = async () => {
     localStorage.setItem('user', JSON.stringify(response.data.user));
 
     const role = response.data.user.role;
-    
-    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      router.push('/ahli/home');
-    } else {
-      if (role === 'Admin' || role === 'Super Admin') {
-        router.push('/ajk');
-      } else if (role === 'Pengerusi') {
-        router.push('/pengerusi');
-      } else {
-        router.push('/ahli/home'); 
-      }
-    }
+    router.push(getRoleDashboard(role, isMobileDevice()));
 
   } catch (error) {
     errorMessage.value = error.response?.data?.message || 'Ralat sistem berlaku. Sila cuba lagi.';

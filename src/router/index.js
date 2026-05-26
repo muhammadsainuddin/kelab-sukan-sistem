@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { getRoleDashboard, isMobileDevice } from '../utils/auth.js';
 
 // ==========================================
 // 1. IMPORT KOMPONEN 
@@ -38,6 +39,16 @@ const SenaraiResit = () => import('../views/ajk/tabs/SenaraiResit.vue'); // Modu
 // ==========================================
 const routes = [
   { path: '/', redirect: '/login' },
+  { path: '/ajk', redirect: '/admin' },
+  {
+    path: '/ajk/:pathMatch(.*)*',
+    redirect: (to) => {
+      const tail = Array.isArray(to.params.pathMatch)
+        ? to.params.pathMatch.join('/')
+        : (to.params.pathMatch || '');
+      return tail ? `/admin/${tail}` : '/admin';
+    },
+  },
   
   // --- Auth Routes ---
   { path: '/login', name: 'Login', component: Login, meta: { requiresGuest: true } },
@@ -126,18 +137,6 @@ const isTokenValid = () => {
 // ==========================================
 // 4. PENGAWAL NAVIGASI (NAVIGATION GUARDS)
 // ==========================================
-const getRoleDashboard = (role, isMobile) => {
-  if (isMobile) return '/ahli/home';
-  
-  switch (role) {
-    case 'Admin':
-    case 'Super Admin': return '/admin';
-    case 'Pengerusi': return '/pengerusi';
-    case 'Ahli':
-    default: return '/ahli/home';
-  }
-};
-
 router.beforeEach((to, from, next) => {
   const loggedIn = isTokenValid();
   const userRole = localStorage.getItem('role'); 
@@ -146,7 +145,7 @@ router.beforeEach((to, from, next) => {
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
   const roleAllowed = to.meta.roleAllowed || to.matched.find(r => r.meta.roleAllowed)?.meta.roleAllowed;
 
-  const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isMobile = isMobileDevice();
 
   if (loggedIn && (requiresGuest || to.path === '/')) {
     return next(getRoleDashboard(userRole, isMobile));
