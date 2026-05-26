@@ -2,10 +2,9 @@
   <div class="flex min-h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
     
     <AdminSidebar 
-      :activeTab="activeTab" 
+      :activeTab="currentRouteName" 
       :isOpen="isSidebarOpen"
       creatorName="MUHAMMAD.S"
-      @change-tab="activeTab = $event"
       @close="isSidebarOpen = false"
     />
 
@@ -18,7 +17,7 @@
           </button>
           
           <h2 class="text-[10px] md:text-sm font-black text-gray-400 uppercase tracking-[0.2em] truncate">
-            {{ activeTabName }}
+            {{ activeTabTitle }}
           </h2>
         </div>
 
@@ -33,10 +32,12 @@
         </div>
       </header>
 
-      <main class="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-50 custom-scrollbar">
-        <transition name="page" mode="out-in">
-          <component :is="activeComponent" @show-alert="handleAlert" />
-        </transition>
+      <main class="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-50 custom-scrollbar relative">
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <component :is="Component" @show-alert="handleAlert" />
+          </transition>
+        </router-view>
       </main>
 
     </div>
@@ -45,41 +46,32 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import AdminSidebar from '../../components/layout/AdminSidebar.vue';
-
-// Import Komponen Modul Sebenar
-import PengurusanAhli from './tabs/PengurusanAhli.vue';
-import KelulusanAhli from './tabs/KelulusanAhli.vue'; // Komponen Sahkan Akaun
-import IndukStaff from './tabs/IndukStaff.vue';
-import ProfilSaya from './tabs/ProfilSaya.vue';
-import LaporanTunggakan from './tabs/LaporanTunggakan.vue';
-import PengurusanSukan from './tabs/PengurusanSukan.vue';
-import PermohonanBantuan from './tabs/PermohonanBantuan.vue';
-import PermohonanBerhenti from './tabs/PermohonanBerhenti.vue';
 
 const isSidebarOpen = ref(false);
 const user = ref(JSON.parse(localStorage.getItem('user')) || {});
+const route = useRoute();
 
-// Default tab yang dibuka mula-mula
-const activeTab = ref('pengesahan'); 
+// Tarik nama route semasa (URL parameter)
+const currentRouteName = computed(() => route.name);
 
-// Peta Komponen (Map Menu ID to Component & Title)
+// Peta Tajuk Header (Berdasarkan nama dari router)
 const moduleMap = {
-  'ahli': { component: PengurusanAhli, label: 'Direktori Ahli Kelab' },
-  'laporan': { component: LaporanTunggakan, label: 'Statistik & Laporan' },
-  'pengesahan': { component: KelulusanAhli, label: 'Sahkan Akaun & No. Ahli' },
-  'staff': { component: IndukStaff, label: 'Pangkalan Data Master HR' },
-  'profil': { component: ProfilSaya, label: 'Profil Admin' },
-  'pertandingan': { component: PengurusanSukan, label: 'Pengurusan Sukan & Acara' },
-  'kebajikan': { component: PermohonanBantuan, label: 'Modul Bantuan Kebajikan' },
-  'berhenti': { component: PermohonanBerhenti, label: 'Pengurusan Penamatan Keahlian' }
+  'ahli': 'Direktori Ahli Kelab',
+  'laporan': 'Statistik & Laporan',
+  'pengesahan': 'Sahkan Akaun & No. Ahli',
+  'staff': 'Pangkalan Data Master HR',
+  'profil': 'Profil Admin',
+  'pertandingan': 'Pengurusan Sukan & Acara',
+  'kebajikan': 'Modul Bantuan Kebajikan',
+  'berhenti': 'Pengurusan Penamatan Keahlian',
+  'SenaraiResit': 'Resit & Kewangan FPX' // <-- Jangan lupa masukkan Resit
 };
 
-const activeTabName = computed(() => moduleMap[activeTab.value]?.label || 'Sistem Admin');
-const activeComponent = computed(() => moduleMap[activeTab.value]?.component);
+const activeTabTitle = computed(() => moduleMap[currentRouteName.value] || 'Sistem Admin');
 
 const handleAlert = (payload) => {
-  // Boleh digantikan dengan notifikasi Toast jika mahu
   alert(payload.msg || payload); 
 };
 </script>
