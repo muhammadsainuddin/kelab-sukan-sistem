@@ -1,92 +1,66 @@
 <template>
-  <div class="p-4 max-w-2xl mx-auto space-y-6 pb-24">
+  <div class="p-4 max-w-2xl mx-auto space-y-6 pb-24 animate-fade-in">
     
-    <transition name="md-slide-up">
-      <div v-if="toast.show" 
-           class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 bg-[#313033] text-[#F4EFF4] text-sm font-medium rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] w-11/12 max-w-md">
-        <svg v-if="toast.type === 'success'" class="w-5 h-5 text-[#C2E8D3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <svg v-else class="w-5 h-5 text-[#F2B8B5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        <span class="flex-1">{{ toast.message }}</span>
-      </div>
-    </transition>
-
-    <div class="px-2 pt-2">
-      <h2 class="text-2xl font-medium text-[#191C1A] tracking-tight">Pusat Kebajikan</h2>
-      <p class="text-sm text-[#404943] mt-1">Permohonan bantuan khas untuk ahli kelab.</p>
+    <div class="text-left mt-2 mb-6">
+      <h2 class="text-2xl font-black text-gray-900 tracking-tight uppercase">Bantuan Kebajikan</h2>
+      <p class="text-xs text-gray-500 font-medium mt-0.5">Permohonan sumbangan dan tuntutan ahli kelab.</p>
     </div>
 
-    <div class="bg-[#F2F4F1] rounded-3xl p-5 flex items-center justify-between border border-[#E0E3E1] shadow-sm">
-      <div>
-        <p class="text-[10px] font-bold text-[#404943] uppercase tracking-widest">Kelayakan Gred Jawatan</p>
-        <p class="text-xl font-black text-[#0F4C3A] mt-1 tracking-tight">GRED {{ profil.gred_sspa || 'TIADA REKOD' }}</p>
-        <p class="text-[10px] text-[#404943] mt-1">Bantuan disalurkan berdasarkan kelayakan gred SSPA.</p>
+    <div v-if="!loading && !profil.is_paid" class="bg-red-50 p-8 rounded-[32px] border border-red-100 flex flex-col items-center text-center shadow-sm">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-5">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       </div>
-      <div class="w-12 h-12 bg-[#C2E8D3] rounded-full flex items-center justify-center text-[#052115] shadow-inner shrink-0">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-      </div>
+      <h3 class="text-base font-black text-red-800 uppercase tracking-widest">Akses Disekat</h3>
+      <p class="text-xs text-red-600 mt-2 font-medium leading-relaxed max-w-xs">
+        Borang permohonan bantuan dikunci kerana anda mempunyai tunggakan yuran atau belum mengaktifkan keahlian. Sila buat pembayaran di tab Yuran terlebih dahulu.
+      </p>
     </div>
 
-    <div class="bg-white rounded-[28px] overflow-hidden shadow-sm border border-gray-200 p-6 relative">
-      <h3 class="text-lg font-bold text-[#191C1A] mb-5">Borang Permohonan</h3>
-      
-      <form @submit.prevent="hantarPermohonan" class="space-y-5">
-        
-        <div class="space-y-1.5">
-          <label class="block text-xs font-medium text-[#404943]">Jenis Bantuan</label>
-          <select v-model="form.jenis_bantuan" required class="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm text-[#191C1A] focus:ring-2 focus:ring-[#0F4C3A] focus:border-[#0F4C3A] outline-none transition-all bg-white appearance-none">
-            <option value="" disabled>-- Pilih jenis bantuan --</option>
-            <option value="Kematian Ahli / Keluarga">Kematian Ahli / Keluarga Terdekat</option>
-            <option value="Sakit Kronik / Kemalangan">Sakit Kronik / Kemalangan Mudarat</option>
-            <option value="Musibah Bencana Alam">Musibah (Banjir / Kebakaran)</option>
-            <option value="Keraian (Perkahwinan / Bersalin)">Keraian (Perkahwinan / Bersalin)</option>
-          </select>
-        </div>
-
-        <div class="space-y-1.5">
-          <label class="block text-xs font-medium text-[#404943]">Keterangan Kejadian</label>
-          <textarea v-model="form.keterangan" rows="3" required placeholder="Nyatakan tarikh, lokasi, dan butiran ringkas..." class="w-full border border-gray-300 rounded-xl px-4 py-3.5 text-sm text-[#191C1A] focus:ring-2 focus:ring-[#0F4C3A] focus:border-[#0F4C3A] outline-none transition-all resize-none"></textarea>
-        </div>
-
-        <div class="space-y-1.5">
-          <label class="block text-xs font-medium text-[#404943]">Dokumen Sokongan (Sijil/Gambar)</label>
+    <div v-else-if="!loading" class="space-y-6">
+      <div class="bg-white p-7 rounded-[32px] border border-gray-100 shadow-sm">
+        <h3 class="text-sm font-black text-blue-800 uppercase tracking-widest border-b border-gray-100 pb-3 mb-5">Borang Permohonan</h3>
+        <form @submit.prevent="submitBantuan" class="space-y-5">
+          <div class="space-y-1.5">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Jenis Tuntutan / Bantuan</label>
+            <select v-model="form.jenis_bantuan" required class="w-full border border-gray-300 rounded-2xl px-4 py-3.5 text-sm font-bold bg-white outline-none focus:border-blue-500 shadow-sm">
+              <option value="" disabled>Pilih Jenis</option>
+              <option value="Kematian Ahli">Sumbangan Kematian Ahli</option>
+              <option value="Kematian Pasangan/Anak/Ibu Bapa">Sumbangan Kematian Tanggungan</option>
+              <option value="Kemasukan Wad (Lebih 3 Hari)">Sumbangan Masuk Wad</option>
+              <option value="Bencana Alam">Bantuan Bencana Alam</option>
+              <option value="Anak Cemerlang">Hadiah Kecemerlangan Anak</option>
+            </select>
+          </div>
           
-          <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50/50 hover:bg-[#F2F4F1] hover:border-[#0F4C3A] transition-colors relative">
-            <input type="file" ref="inputDokumen" @change="handleDokumen" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
-            
-            <svg v-if="!fileDokumen" class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-            <svg v-else class="w-8 h-8 text-[#0F4C3A] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            
-            <p class="text-xs font-bold text-[#191C1A] text-center px-4 truncate w-full">
-              {{ fileDokumen ? fileDokumen.name : 'Muat naik fail di sini' }}
-            </p>
-            <p class="text-[10px] text-[#404943] mt-1" v-if="!fileDokumen">Format PDF, JPG atau PNG disokong.</p>
+          <div class="space-y-1.5">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Keterangan / Butiran</label>
+            <textarea v-model="form.keterangan" required placeholder="Nyatakan tarikh kejadian atau butiran ringkas..." class="w-full border border-gray-300 rounded-2xl px-4 py-4 text-sm font-medium h-24 resize-none outline-none focus:border-blue-500 shadow-sm"></textarea>
           </div>
-        </div>
-
-        <button type="submit" :disabled="isSubmitting" class="w-full py-3.5 bg-[#0F4C3A] text-white text-sm font-bold rounded-full shadow-md hover:bg-[#0b3b28] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 tap-transparent mt-2">
-          <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-          {{ isSubmitting ? 'Menghantar...' : 'Hantar Permohonan' }}
-        </button>
-      </form>
-    </div>
-
-    <div class="pt-4">
-      <h3 class="text-sm font-medium text-[#191C1A] px-2 mb-4">Sejarah Tuntutan Saya</h3>
-      
-      <div v-if="sejarah.length === 0" class="text-center py-6 px-4">
-        <p class="text-xs text-gray-500 font-medium">Tiada sejarah permohonan buat masa ini.</p>
+          
+          <div class="space-y-1.5">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Dokumen Sokongan (Resit/Sijil)</label>
+            <input type="file" @change="onFileChange" accept="image/*,.pdf" class="w-full text-xs file:mr-3 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-blue-50 file:text-blue-700 bg-white border border-gray-200 rounded-2xl p-1.5 cursor-pointer">
+          </div>
+          
+          <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-700 hover:bg-blue-800 text-white text-xs font-black uppercase tracking-widest py-4 rounded-full shadow-lg shadow-blue-700/20 active:scale-95 transition-all mt-2">
+            {{ isSubmitting ? 'Menghantar Data...' : 'Hantar Permohonan Bantuan' }}
+          </button>
+        </form>
       </div>
 
-      <div class="space-y-3">
-        <div v-for="item in sejarah" :key="item.id" class="bg-white border border-gray-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-          <div>
-            <h4 class="text-xs font-bold text-[#191C1A] uppercase">{{ item.jenis_bantuan }}</h4>
-            <p class="text-[10px] text-[#404943] mt-1">{{ formatTarikh(item.tarikh_mohon) }}</p>
-          </div>
-          <div>
-            <span v-if="item.status_permohonan === 'MENUNGGU'" class="px-2.5 py-1 bg-[#F9DEDC] text-[#410E0B] text-[9px] font-bold uppercase rounded-full">Menunggu</span>
-            <span v-else-if="item.status_permohonan === 'LULUS'" class="px-2.5 py-1 bg-[#C2E8D3] text-[#052115] text-[9px] font-bold uppercase rounded-full">Diluluskan</span>
-            <span v-else class="px-2.5 py-1 bg-gray-200 text-gray-700 text-[9px] font-bold uppercase rounded-full">Ditolak</span>
+      <div class="bg-white p-7 rounded-[32px] border border-gray-100 shadow-sm">
+        <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest border-b border-gray-100 pb-3 mb-5">Rekod Tuntutan Saya</h3>
+        <div v-if="sejarah.length === 0" class="text-center py-6 text-xs text-gray-400 font-bold uppercase tracking-widest">Tiada rekod tuntutan.</div>
+        <div v-else class="space-y-3">
+          <div v-for="rekod in sejarah" :key="rekod.id" class="p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-xs font-black text-gray-900 uppercase">{{ rekod.jenis_bantuan }}</span>
+              <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md"
+                    :class="rekod.status_permohonan === 'LULUS' ? 'bg-green-100 text-green-700' : (rekod.status_permohonan === 'DITOLAK' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')">
+                {{ rekod.status_permohonan }}
+              </span>
+            </div>
+            <p class="text-[11px] text-gray-500 font-medium line-clamp-2 leading-relaxed">{{ rekod.keterangan }}</p>
           </div>
         </div>
       </div>
@@ -100,97 +74,56 @@ import { ref, onMounted } from 'vue';
 import api from '../../../services/api';
 
 const profil = ref({});
-const form = ref({ jenis_bantuan: '', keterangan: '' });
-const fileDokumen = ref(null);
-const inputDokumen = ref(null);
-
-const isSubmitting = ref(false);
 const sejarah = ref([]);
-const toast = ref({ show: false, message: '', type: 'success' });
+const loading = ref(true);
+const isSubmitting = ref(false);
 
-// Tunjuk Notifikasi Snackbar
-const paparToast = (msg, type = 'success') => {
-  toast.value = { show: true, message: msg, type };
-  setTimeout(() => toast.value.show = false, 3000);
-};
+const form = ref({ jenis_bantuan: '', keterangan: '' });
+const dokumenFile = ref(null);
 
-// Tarik Profil (Untuk Papar Gred SSPA)
-const fetchProfil = async () => {
+const fetchProfilDanSejarah = async () => {
   try {
-    const res = await api.get('/ahli/profil');
-    profil.value = res.data.data;
+    const resProfil = await api.get('/ahli/profil');
+    profil.value = resProfil.data.data;
+    
+    // Jika berbayar, tarik sejarah
+    if (profil.value.is_paid) {
+      const resSejarah = await api.get('/ahli/bantuan/sejarah');
+      sejarah.value = resSejarah.data.data || [];
+    }
   } catch (error) {
-    console.error("Gagal menarik profil");
+    console.error(error);
+  } finally {
+    loading.value = false;
   }
 };
 
-// Tarik Sejarah Permohonan
-const fetchSejarah = async () => {
-  try {
-    const res = await api.get('/ahli/bantuan/sejarah'); // Gunakan route yang didaftarkan
-    sejarah.value = res.data.data || [];
-  } catch (error) {
-    console.error("Gagal menarik sejarah");
-  }
-};
+const onFileChange = (e) => dokumenFile.value = e.target.files[0];
 
-const handleDokumen = (e) => {
-  const file = e.target.files[0];
-  if (file) fileDokumen.value = file;
-};
-
-// Hantar Permohonan (Guna FormData sebab ada fail)
-const hantarPermohonan = async () => {
+const submitBantuan = async () => {
   isSubmitting.value = true;
-  
-  const formData = new FormData();
-  formData.append('jenis_bantuan', form.value.jenis_bantuan);
-  formData.append('keterangan', form.value.keterangan);
-  if (fileDokumen.value) {
-    formData.append('dokumen', fileDokumen.value); // Pastikan backend terima 'dokumen'
-  }
-
   try {
-    const res = await api.post('/ahli/bantuan', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    
-    paparToast(res.data.message || "Permohonan berjaya dihantar!", "success");
-    
-    // Reset Form
+    const formData = new FormData();
+    formData.append('jenis_bantuan', form.value.jenis_bantuan);
+    formData.append('keterangan', form.value.keterangan);
+    if (dokumenFile.value) formData.append('dokumen', dokumenFile.value);
+
+    await api.post('/ahli/bantuan', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    alert("Permohonan berjaya dihantar kepada Urusetia Kelab.");
     form.value = { jenis_bantuan: '', keterangan: '' };
-    fileDokumen.value = null;
-    if(inputDokumen.value) inputDokumen.value.value = '';
-    
-    fetchSejarah(); // Refresh sejarah
+    dokumenFile.value = null;
+    fetchProfilDanSejarah();
   } catch (error) {
-    paparToast(error.response?.data?.message || "Ralat menghantar permohonan.", "error");
+    alert("Gagal menghantar permohonan.");
   } finally {
     isSubmitting.value = false;
   }
 };
 
-const formatTarikh = (tarikh) => {
-  if(!tarikh) return '';
-  const d = new Date(tarikh);
-  return d.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' });
-};
-
-onMounted(() => {
-  fetchProfil();
-  fetchSejarah();
-});
+onMounted(fetchProfilDanSejarah);
 </script>
 
 <style scoped>
-.tap-transparent { -webkit-tap-highlight-color: transparent; }
-
-/* Animasi Snackbar Bawah MD3 */
-.md-slide-up-enter-active, .md-slide-up-leave-active {
-  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
-}
-.md-slide-up-enter-from, .md-slide-up-leave-to {
-  opacity: 0;
-  transform: translate(-50%, 20px);
-}
+.animate-fade-in { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>

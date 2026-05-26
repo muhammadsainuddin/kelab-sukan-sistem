@@ -6,28 +6,44 @@ const Register = () => import('../components/Register.vue');
 const ForgotPassword = () => import('../components/ForgotPassword.vue');
 const ResetPassword = () => import('../components/ResetPassword.vue');
 
-// Komponen Dashboard
+// Komponen Dashboard Utama
 const DashboardAhli = () => import('../views/ahli/Dashboard.vue');
 const DashboardAJK = () => import('../views/ajk/Dashboard.vue');
 const DashboardPengerusi = () => import('../views/pengerusi/Dashboard.vue');
 const DashboardSuperAdmin = () => import('../views/superadmin/Dashboard.vue');
 
+// Komponen Tab Kanak-kanak Ahli (Child Tabs)
+const HomeAhli = () => import('../views/ahli/tabs/HomeAhli.vue');
+const AktivitiAhli = () => import('../views/ahli/tabs/AktivitiAhli.vue');
+const YuranAhli = () => import('../views/ahli/tabs/YuranAhli.vue');
+const BantuanAhli = () => import('../views/ahli/tabs/BantuanAhli.vue');
+const ProfilAhli = () => import('../views/ahli/tabs/ProfilAhli.vue');
+
 const routes = [
   { path: '/', redirect: '/login' },
   
-  // Auth Routes (Tambah requiresGuest supaya user yang dah login tak boleh masuk)
+  // Auth Routes
   { path: '/login', name: 'Login', component: Login, meta: { requiresGuest: true } },
   { path: '/register', name: 'Register', component: Register, meta: { requiresGuest: true } },
   { path: '/forgot-password', name: 'ForgotPassword', component: ForgotPassword, meta: { requiresGuest: true } },
   { path: '/reset-password/:token', name: 'ResetPassword', component: ResetPassword, meta: { requiresGuest: true } },
   
-  // Dashboard Routes
+  // Dashboard Ahli Bersama Seni Bina Child Routes
   { 
     path: '/ahli', 
-    name: 'Ahli', 
     component: DashboardAhli, 
-    meta: { requiresAuth: true, roleAllowed: ['Ahli', 'Admin', 'Pengerusi', 'Super Admin'] } 
+    meta: { requiresAuth: true, roleAllowed: ['Ahli', 'Admin', 'Pengerusi', 'Super Admin'] },
+    children: [
+      { path: '', redirect: '/ahli/home' },
+      { path: 'home', name: 'AhliHome', component: HomeAhli },
+      { path: 'aktiviti', name: 'AhliAktiviti', component: AktivitiAhli },
+      { path: 'yuran', name: 'AhliYuran', component: YuranAhli },
+      { path: 'bantuan', name: 'AhliBantuan', component: BantuanAhli },
+      { path: 'profil', name: 'AhliProfil', component: ProfilAhli }
+    ]
   },
+  
+  // Dashboard Peranan Lain
   { 
     path: '/ajk', 
     name: 'AJK', 
@@ -53,7 +69,7 @@ const router = createRouter({
   routes
 });
 
-// FUNGSI SEMAKAN JWT (Menyemak adakah token sudah tamat tempoh)
+// Semakan Validasi Token JWT
 const isTokenValid = () => {
   const token = localStorage.getItem('token');
   if (!token) return false;
@@ -63,66 +79,53 @@ const isTokenValid = () => {
     const isExpired = (payload.exp * 1000) < Date.now();
     
     if (isExpired) {
-      // Jika tamat tempoh, bersihkan storage secara automatik
       localStorage.removeItem('token');
       localStorage.removeItem('role');
+      localStorage.removeItem('user');
       return false;
     }
     return true;
   } catch (e) {
-    return false; // Jika token rosak/invalid format
+    return false;
   }
 };
 
-// Pengawal Navigasi (Navigation Guard)
+// Navigation Guard
 router.beforeEach((to, from, next) => {
   const loggedIn = isTokenValid();
   const userRole = localStorage.getItem('role'); 
   
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
-  const roleAllowed = to.meta.roleAllowed;
+  const roleAllowed = to.meta.roleAllowed || to.matched.find(r => r.meta.roleAllowed)?.meta.roleAllowed;
 
-  // 1. SITUASI: Sudah log masuk, tapi cuba buka page Login / Register
+  const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // 1. SITUASI: Sudah log masuk, cuba buka login/register atau path akar
   if (loggedIn && (requiresGuest || to.path === '/')) {
-    // Tendang terus ke dashboard masing-masing
+    if (isMobile) {
+      return next('/ahli/home');
+    }
     if (userRole === 'Admin' || userRole === 'Super Admin') return next('/ajk');
     if (userRole === 'Pengerusi') return next('/pengerusi');
-    return next('/ahli'); // Default untuk Ahli
+    return next('/ahli/home');
   }
 
-  // 2. SITUASI: Cuba buka page dalam (requiresAuth) tapi belum login / token dah expired
+  // 2. SITUASI: Belum log masuk tapi cuba akses modul dalam
   if (requiresAuth && !loggedIn) {
-    localStorage.removeItem('token'); // Langkah berjaga-jaga bersihkan sisa data
-    localStorage.removeItem('role');
-    
-    // Jangan tunjuk alert jika baru buka sistem pertama kali, 
-    // tunjuk alert hanya jika mereka ditendang keluar
-    if (localStorage.getItem('token')) {
-        alert("Sesi keselamatan anda telah tamat. Sila log masuk semula.");
-    }
+    localStorage.clear();
     return next('/login'); 
   } 
   
-  // 3. SITUASI: Cuba akses halaman yang bukan peranan dia (Contoh: Ahli cuba masuk /ajk)
+  // 3. SITUASI: Halangan semakan peranan (Role Protection)
   if (requiresAuth && roleAllowed && !roleAllowed.includes(userRole)) {
-    console.warn(`Akses Ditolak: Peranan anda ialah ${userRole}, tetapi halaman ini perlukan ${roleAllowed}`);
+    if (isMobile) return next('/ahli/home');
     
-    // Halakan semula ke tempat yang betul mengikut peranan dia
-    if (userRole === 'Admin' || userRole === 'Super Admin') {
-        return next('/ajk');
-    } else if (userRole === 'Pengerusi') {
-        return next('/pengerusi');
-    } else if (userRole === 'Ahli') {
-        return next('/ahli');
-    } else {
-        // Jika role rosak atau tidak sah
-        localStorage.clear();
-        return next('/login');
-    }
+    if (userRole === 'Admin' || userRole === 'Super Admin') return next('/ajk');
+    if (userRole === 'Pengerusi') return next('/pengerusi');
+    return next('/ahli/home');
   } 
   
-  // 4. SITUASI: Semuanya mematuhi syarat, benarkan navigasi diteruskan
   next(); 
 });
 

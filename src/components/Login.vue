@@ -122,7 +122,6 @@ import api from '../services/api';
 
 const router = useRouter();
 
-// --- Logik Borang Log Masuk ---
 const form = ref({ email: '', password: '' });
 const isLoading = ref(false);
 const errorMessage = ref('');
@@ -139,10 +138,20 @@ const handleLogin = async () => {
     localStorage.setItem('user', JSON.stringify(response.data.user));
 
     const role = response.data.user.role;
-    if (role === 'Admin') router.push('/ajk');
-    else if (role === 'Pengerusi') router.push('/pengerusi');
-    else if (role === 'Super Admin') router.push('/superadmin');
-    else router.push('/ahli'); 
+    
+    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      router.push('/ahli/home');
+    } else {
+      if (role === 'Admin' || role === 'Super Admin') {
+        router.push('/ajk');
+      } else if (role === 'Pengerusi') {
+        router.push('/pengerusi');
+      } else {
+        router.push('/ahli/home'); 
+      }
+    }
 
   } catch (error) {
     errorMessage.value = error.response?.data?.message || 'Ralat sistem berlaku. Sila cuba lagi.';
@@ -151,7 +160,6 @@ const handleLogin = async () => {
   }
 };
 
-// --- Logik Slider Gambar Skrin Besar ---
 const currentSlide = ref(0);
 let slideInterval;
 
@@ -161,26 +169,25 @@ const slides = [
     tag: 'Sukan & Rekreasi',
     title: 'Kekal Aktif, Kekal Sihat.',
     desc: 'Memupuk semangat kesukanan dan gaya hidup sihat di kalangan warga Jabatan Perhilitan menerusi pelbagai penganjuran sukan.',
-    image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' // Ganti dengan gambar sukan anda
+    image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' 
   },
   {
     id: 2,
     tag: 'Pasukan Kita',
     title: 'Bina Kesatuan, Kukuhkan Ikatan.',
     desc: 'Menyemarakkan ukhuwah dan kerja berpasukan melalui setiap kejohanan dan perlawanan antara jabatan.',
-    image: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' // Ganti dengan gambar pasukan
+    image: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' 
   },
   {
     id: 3,
     tag: 'Kejohanan SAKOM',
     title: 'Sedia Untuk Beraksi.',
     desc: 'Platform terbaik untuk mencungkil bakat baharu dan mengharumkan nama kontinjen Perhilitan.',
-    image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' // Ganti dengan gambar aksi sukan
+    image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80' 
   }
 ];
 
 onMounted(() => {
-  // Tukar gambar setiap 5 saat
   slideInterval = setInterval(() => {
     currentSlide.value = (currentSlide.value + 1) % slides.length;
   }, 5000);
@@ -192,7 +199,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* CSS Untuk Efek Transisi Slider */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 1.5s ease;
